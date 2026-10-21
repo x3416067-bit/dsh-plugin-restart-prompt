@@ -1,0 +1,4 @@
+# 插件变动重启提示：挂载宿主半区（变更监听 + 重启接口）与客户端半区（提示卡片）
+- insert:
+    - id: dsh-restart-prompt
+      name: 'dsh-plugin-restart-prompt'
