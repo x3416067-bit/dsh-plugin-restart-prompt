@@ -49,9 +49,22 @@ sh.Run """<DSH 外壳 exe>""", 1, False                                         
 | 一切走绝对路径 | 机器 PATH 里可能既没有 `pwsh` 也没有 `powershell`；`spawn` 失败只异步抛 `error`（`try/catch` 抓不到），曾表现为「点了只有动画」 |
 | 失败要能看见 | 派发失败或 20 秒内未生效，卡片显示红色错误与「重试」；派发结果追加到 `$DSH_HOME/dsh-plugin-restart/relaunch.log` |
 
+## 什么算「插件变动」
+
+只有**插件身份**变化才提示重启，判定口径：
+
+| 观测面 | 判定方式 |
+|---|---|
+| `package.json` | 只比 `dependencies` 与 `dsh.profile.bundles`，其它字段（`scripts`、`description`…）变了不算 |
+| `cordis.yml` / `cordis.patch.yml` | 只比插件条目结构（`id` / `name` 行）；`config` 段改动不算 |
+| `pnpm-lock.yaml` | 按 mtime / size 变化算（只有装包才会变） |
+| `node_modules` | 比顶层包清单，忽略 `.开头的缓存目录` |
+
+因此改推理等级、切模型、调主题这类只写 `config` 段的设置**不会**再弹重启卡片。
+
 ## 变动详情面板
 
-- 差异来源：本次变动前后的 `package.json`、`cordis.yml`、`cordis.patch.yml`、`pnpm-workspace.yaml` 全文快照。
+- 差异来源：本次变动前后的 `package.json`、`cordis.yml`、`cordis.patch.yml`、`pnpm-workspace.yaml` 快照；cordis 层只保留 `id` / `name` 条目行，不贴 `config`。
 - 行级 diff 为 LCS 实现，改动行上下各留 2 行上下文，其余折成「… 跳过 N 行」，单文件上限 400 行。
 - 结构化摘要：依赖版本变化（`a 1.0.0 → 1.1.0`）、`dsh.profile.bundles` 增删、`node_modules` 里新增 / 移除的包。
 - `pnpm-lock.yaml` 体积大，只标注「依赖锁已变化」，不做行级对比。
